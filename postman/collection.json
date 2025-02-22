@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "3cdf49b3-8d84-4e6f-aaaa-5e6153d42fce",
+		"name": "Real-Debrid API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34746203"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Get Device Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_URL}}/device/code?client_id={{CLIENT_ID}}",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"device",
+								"code"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{CLIENT_ID}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Access Token (Device)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "{{CLIENT_ID}}"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{CLIENT_SECRET}}"
+								},
+								{
+									"key": "code",
+									"value": "{{DEVICE_CODE}}"
+								},
+								{
+									"key": "grant_type",
+									"value": "http://oauth.net/grant_type/device/1.0"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{AUTH_URL}}/token",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Web Authorization",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_URL}}/auth?client_id={{CLIENT_ID}}&redirect_uri={{REDIRECT_URI}}&response_type=code&state=state123",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"auth"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{CLIENT_ID}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{REDIRECT_URI}}"
+								},
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "state",
+									"value": "state123"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Unrestrict",
+			"item": [
+				{
+					"name": "Unrestrict Link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "link",
+									"value": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/unrestrict/link",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"unrestrict",
+								"link"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unrestrict Folder",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "link",
+									"value": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/unrestrict/folder",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"unrestrict",
+								"folder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Decrypt Container",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "file",
+							"file": {}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/unrestrict/containerFile",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"unrestrict",
+								"containerFile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Torrents",
+			"item": [
+				{
+					"name": "List Torrents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/torrents",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"torrents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Torrent File",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "file",
+							"file": {}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/torrents/addTorrent",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"torrents",
+								"addTorrent"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Magnet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "magnet",
+									"value": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/torrents/addMagnet",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"torrents",
+								"addMagnet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Select Files",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "files",
+									"value": "all"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/torrents/selectFiles/{id}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"torrents",
+								"selectFiles",
+								"{id}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Torrent Info",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/torrents/info/{id}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"torrents",
+								"info",
+								"{id}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Downloads",
+			"item": [
+				{
+					"name": "List Downloads",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/downloads?limit=100&page=1",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"downloads"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Download",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/downloads/delete/{id}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"downloads",
+								"delete",
+								"{id}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Streaming",
+			"item": [
+				{
+					"name": "Get Transcode Links",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/streaming/transcode/{id}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"streaming",
+								"transcode",
+								"{id}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Media Info",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/streaming/mediaInfos/{id}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"streaming",
+								"mediaInfos",
+								"{id}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "https://api.real-debrid.com/rest/1.0",
+			"type": "string"
+		},
+		{
+			"key": "AUTH_URL",
+			"value": "https://api.real-debrid.com/oauth/v2",
+			"type": "string"
+		},
+		{
+			"key": "ACCESS_TOKEN",
+			"value": "2IYXVMTWY7WNXQXKREMY6Y6MMLDWHKIWK6KEJMEIF5I7VEYUWA5A",
+			"type": "string"
+		}
+	]
+}
