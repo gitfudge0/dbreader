@@ -3,19 +3,46 @@ import UnrestrictModel from "@/models/Unrestrict.model";
 import { colors } from "@/theme/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  Platform,
+  PermissionsAndroid,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import BackgroundService from "react-native-background-actions";
+import RNFS from "react-native-fs";
 import {
   ActivityIndicator,
   Button,
-  Text,
   IconButton,
+  Text,
 } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import * as FileSystem from "expo-file-system";
-import * as Notifications from "expo-notifications";
-import BackgroundService from "react-native-background-actions";
+
+const requestStoragePermission = async () => {
+  try {
+    if (Number(Platform.Version) >= 33) {
+      return true;
+    }
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      {
+        title: "Storage Permission",
+        message: "App needs access to storage to download files",
+        buttonNeutral: "Ask Me Later",
+        buttonNegative: "Cancel",
+        buttonPositive: "OK",
+      },
+    );
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
+};
 
 interface DownloadProgress {
   [key: string]: {
@@ -24,14 +51,6 @@ interface DownloadProgress {
     filename: string;
   };
 }
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
 
 interface UnrestrictedCache {
   data: UnrestrictModel.UnrestrictedItem;
@@ -53,6 +72,7 @@ export default function TorrentDetailsScreen() {
     Record<string, UnrestrictModel.UnrestrictedItem>
   >({});
   const [downloads, setDownloads] = useState<DownloadProgress>({});
+  const [activeDownloads, setActiveDownloads] = useState<number>(0);
 
   // Fetch torrent details
   const { data: torrent, isLoading } = useQuery({
@@ -89,6 +109,9 @@ export default function TorrentDetailsScreen() {
     };
 
     loadCachedLinks();
+    return () => {
+      BackgroundService.stop();
+    };
   }, [id]);
 
   const unrestrictMutation = useMutation({
@@ -170,123 +193,168 @@ export default function TorrentDetailsScreen() {
     });
   }, []);
 
-  const updateDownloadProgress = (
-    id: string,
-    progress: number,
-    status: "downloading" | "completed" | "error",
-    filename: string,
-  ) => {
-    setDownloads((prev) => ({
-      ...prev,
-      [id]: { progress, status, filename },
-    }));
-  };
-
-  const downloadFile = async (item: UnrestrictModel.UnrestrictedItem) => {
-    const downloadId = Math.random().toString(36).substring(7);
-    const filename = item.filename;
-    const downloadUrl = item.download;
-
-    // Create downloads directory if it doesn't exist
-    const downloadDir = `${FileSystem.documentDirectory}downloads/`;
-    await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true });
-
-    const fileUri = `${downloadDir}${filename}`;
-
-    // Set up notification
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Download Started",
-        body: `Downloading ${filename}`,
-        data: { downloadId },
-      },
-      trigger: null,
-    });
-
-    // Initialize download progress
-    updateDownloadProgress(downloadId, 0, "downloading", filename);
+  const downloadTask = async (taskDataArguments: any) => {
+    console.log("Background task started with args:", taskDataArguments);
+    const { item } = taskDataArguments;
 
     try {
-      const downloadResumable = FileSystem.createDownloadResumable(
-        downloadUrl,
-        fileUri,
-        {},
-        (downloadProgress) => {
+      const filename = item.filename;
+      const downloadUrl = item.download;
+
+      // Get the downloads directory path
+      const downloadPath = RNFS.DownloadDirectoryPath + "/Kaizoku/" + filename;
+      console.log("Download path:", downloadPath);
+
+      // Ensure Kaizoku directory exists
+      await RNFS.mkdir(RNFS.DownloadDirectoryPath + "/Kaizoku/");
+
+      // Start download with progress tracking
+      const { promise } = RNFS.downloadFile({
+        fromUrl: downloadUrl,
+        toFile: downloadPath,
+        progress: (response) => {
           const progress =
-            downloadProgress.totalBytesWritten /
-            downloadProgress.totalBytesExpectedToWrite;
-          updateDownloadProgress(downloadId, progress, "downloading", filename);
+            (response.bytesWritten / response.contentLength) * 100;
 
-          // Update notification
-          Notifications.scheduleNotificationAsync({
-            content: {
-              title: "Downloading",
-              body: `${filename} - ${Math.round(progress * 100)}%`,
-              data: { downloadId },
+          // Update the downloads state
+          setDownloads((prev) => ({
+            ...prev,
+            [item.id]: {
+              progress,
+              status: "downloading",
+              filename,
             },
-            trigger: null,
-          });
+          }));
         },
-      );
+        progressDivider: 1,
+      });
 
-      const result = await downloadResumable.downloadAsync();
+      // Wait for download to complete
+      const result = await promise;
+      console.log("Download result:", result);
 
-      if (result) {
-        updateDownloadProgress(downloadId, 1, "completed", filename);
-        // Show completion notification
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Download Complete",
-            body: `${filename} has been downloaded`,
-            data: { downloadId },
+      if (result.statusCode === 200) {
+        console.log("Download completed successfully");
+
+        // Update downloads state to completed
+        setDownloads((prev) => ({
+          ...prev,
+          [item.id]: {
+            progress: 100,
+            status: "completed",
+            filename,
           },
-          trigger: null,
-        });
+        }));
+
+        // Wait briefly to show completion
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } else {
+        throw new Error(`Download failed with status ${result.statusCode}`);
       }
     } catch (error) {
       console.error("Download error:", error);
-      updateDownloadProgress(downloadId, 0, "error", filename);
-      // Show error notification
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Download Failed",
-          body: `Failed to download ${filename}`,
-          data: { downloadId },
+
+      // Update downloads state to error
+      setDownloads((prev) => ({
+        ...prev,
+        [item.id]: {
+          progress: 0,
+          status: "error",
+          filename: item.filename,
         },
-        trigger: null,
+      }));
+    } finally {
+      setActiveDownloads((prev) => {
+        const newCount = prev - 1;
+        if (newCount === 0) {
+          BackgroundService.stop();
+        }
+        return newCount;
       });
     }
   };
 
-  // Update the handleDownload function
   const handleDownload = async (item: UnrestrictModel.UnrestrictedItem) => {
-    console.log("DOWNLOADING");
-    Toast.show({
-      type: "info",
-      text1: "Starting Download",
-      text2: item.filename,
-    });
+    const hasStoragePermission = await requestStoragePermission();
 
-    // Start download in background
-    await BackgroundService.start(
-      async () => {
-        await downloadFile(item);
-      },
-      {
+    if (!hasStoragePermission) {
+      Toast.show({
+        type: "error",
+        text1: "Permission Required",
+        text2: !hasStoragePermission
+          ? "Storage permission is needed to download files"
+          : "Notification permission is needed to show download progress",
+      });
+      return;
+    }
+
+    try {
+      console.log("Starting background download for:", item.filename);
+
+      const options = {
         taskName: "Download",
         taskTitle: `Downloading ${item.filename}`,
-        taskDesc: "File download in progress",
+        taskDesc: "Starting download...",
         taskIcon: {
           name: "ic_launcher",
           type: "mipmap",
         },
         color: "#ff00ff",
         parameters: {
+          item,
+        },
+        progressBar: {
+          max: 100,
+          value: 0,
+          indeterminate: false,
+        },
+      };
+
+      setActiveDownloads((prev) => prev + 1);
+
+      // Initialize download state
+      setDownloads((prev) => ({
+        ...prev,
+        [item.id]: {
+          progress: 0,
+          status: "downloading",
           filename: item.filename,
         },
-      },
-    );
+      }));
+
+      // Only start the service if it's not already running
+      if (activeDownloads === 0) {
+        await BackgroundService.start(downloadTask, options);
+      } else {
+        // If service is already running, just execute the task
+        downloadTask({ item });
+      }
+
+      Toast.show({
+        type: "success",
+        text1: "Download Started",
+        text2: item.filename,
+      });
+    } catch (error) {
+      console.error("Failed to start download:", error);
+      setActiveDownloads((prev) => prev - 1);
+      setDownloads((prev) => ({
+        ...prev,
+        [item.id]: {
+          progress: 0,
+          status: "error",
+          filename: item.filename,
+        },
+      }));
+      Toast.show({
+        type: "error",
+        text1: "Download Failed",
+        text2:
+          error instanceof Error ? error.message : "Could not start download",
+      });
+    }
   };
+
   const areAllLinksUnrestricted =
     torrent?.links.every((link) => unrestrictedLinks[link]) ?? false;
 
@@ -380,31 +448,36 @@ export default function TorrentDetailsScreen() {
                             onPress={() => handlePlay(unrestrictedData)}
                           />
                         )}
-                        <IconButton
-                          icon={
-                            downloads[unrestrictedData.id]?.status ===
-                            "downloading"
-                              ? "stop"
-                              : "download"
-                          }
-                          mode="outlined"
-                          iconColor="#fff"
-                          size={22}
-                          style={styles.iconOnlyButton}
-                          onPress={() => handleDownload(unrestrictedData)}
-                          disabled={
-                            downloads[unrestrictedData.id]?.status ===
-                            "downloading"
-                          }
-                        />
+                        {downloads[unrestrictedData.id]?.status !==
+                          "downloading" && (
+                          <IconButton
+                            icon={
+                              downloads[unrestrictedData.id]?.status ===
+                              "downloading"
+                                ? "stop"
+                                : "download"
+                            }
+                            mode="outlined"
+                            iconColor="#fff"
+                            size={22}
+                            style={styles.iconOnlyButton}
+                            onPress={() => handleDownload(unrestrictedData)}
+                            disabled={
+                              downloads[unrestrictedData.id]?.status ===
+                              "downloading"
+                            }
+                          />
+                        )}
                         {downloads[unrestrictedData.id]?.status ===
                           "downloading" && (
-                          <Text style={styles.downloadProgress}>
-                            {Math.round(
-                              downloads[unrestrictedData.id].progress * 100,
-                            )}
-                            %
-                          </Text>
+                          <View style={styles.downloadProgressContainer}>
+                            <Text style={styles.downloadProgress}>
+                              {Math.round(
+                                downloads[unrestrictedData.id]?.progress,
+                              )}
+                              %
+                            </Text>
+                          </View>
                         )}
                       </View>
                     )}
@@ -525,9 +598,30 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
+  downloadProgressContainer: {
+    marginLeft: 0.5,
+    borderRadius: 100,
+    borderColor: "#fff",
+    borderWidth: 1,
+    height: 36,
+    width: 36,
+    display: "flex",
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   downloadProgress: {
     color: "#fff",
-    fontSize: 12,
-    marginLeft: 8,
+    fontSize: 10,
+  },
+  warningContainer: {
+    padding: 16,
+    backgroundColor: colors.error,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  warningText: {
+    color: "#fff",
+    marginBottom: 8,
   },
 });
