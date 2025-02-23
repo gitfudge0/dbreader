@@ -27,7 +27,7 @@ export default function TorrentScreen() {
   const addMagnetMutation = useMutation({
     mutationFn: (magnet: string) => api.addMagnet(magnet),
     onSuccess: () => {
-      // queryClient.invalidateQueries(["torrents"]);
+      queryClient.invalidateQueries({ queryKey: ["torrents"] });
       setModalVisible(false);
       Toast.show({
         type: "success",
@@ -57,7 +57,15 @@ export default function TorrentScreen() {
       <FlashList
         data={torrents}
         renderItem={({ item }) => (
-          <TorrentListItem torrent={item} onPress={() => router.push(`/`)} />
+          <TorrentListItem
+            torrent={item}
+            onPress={() =>
+              router.push({
+                pathname: "/(details)/[id]",
+                params: { id: item.id },
+              })
+            }
+          />
         )}
         estimatedItemSize={80}
         contentContainerStyle={styles.list}

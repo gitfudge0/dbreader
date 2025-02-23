@@ -6,7 +6,7 @@ const BASE_URL = "https://api.real-debrid.com/rest/1.0";
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
-    "Content-Type": "application/json",
+    "Content-Type": "application/x-www-form-urlencoded",
   },
 });
 
@@ -28,7 +28,9 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor for error handling
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
     // Handle specific API errors here
     if (error.response) {
