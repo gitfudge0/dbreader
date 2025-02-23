@@ -31,6 +31,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="magnet"
+        options={{
+          title: "Add Magnet", // Changed from 'Torrents' to 'All Torrents'
+          tabBarLabel: "Add Torrent", // This keeps the tab label shorter
+          tabBarIcon: ({ focused, size }) => (
+            <MaterialCommunityIcons
+              name="plus-circle-outline"
+              size={size}
+              color={focused ? colors.primary : colors.onSurfaceVariant}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",

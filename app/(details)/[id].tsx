@@ -360,9 +360,20 @@ export default function TorrentDetailsScreen() {
 
   if (isLoading || !torrent) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <>
+        <Stack.Screen
+          options={{
+            title: "Torrent Details",
+            headerTintColor: "#fff",
+            headerStyle: {
+              backgroundColor: colors.surface,
+            },
+          }}
+        />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </>
     );
   }
 
@@ -501,6 +512,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: colors.background,
   },
   header: {
     padding: 16,

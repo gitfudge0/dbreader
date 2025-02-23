@@ -11,8 +11,8 @@ export const api = {
     return data;
   },
 
-  getTorrentInfo: async (id: string): Promise<TorrentModel.TorrentItem> => {
-    const { data } = await axiosInstance.get<TorrentModel.TorrentItem>(
+  getTorrentInfo: async (id: string): Promise<TorrentModel.InfoApi> => {
+    const { data } = await axiosInstance.get<TorrentModel.InfoApi>(
       `/torrents/info/${id}`,
     );
     return data;
@@ -26,6 +26,12 @@ export const api = {
       },
     );
     return data;
+  },
+
+  selectFiles: async (id: string, files: string): Promise<void> => {
+    await axiosInstance.post(`/torrents/selectFiles/${id}`, {
+      files,
+    });
   },
 
   deleteTorrent: async (id: string): Promise<void> => {

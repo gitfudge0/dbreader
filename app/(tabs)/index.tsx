@@ -1,6 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { StyleSheet, View } from "react-native";
-import { FAB, ActivityIndicator, Text } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import { TorrentListItem } from "@/components/TorrentItem";
@@ -77,11 +77,6 @@ export default function TorrentScreen() {
         onRefresh={refetch}
         refreshing={isLoading}
       />
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      />
       <AddMagnetModal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
@@ -113,12 +108,5 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.onSurfaceVariant,
     fontSize: 16,
-  },
-  fab: {
-    position: "absolute",
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.primary,
   },
 });
