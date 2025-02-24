@@ -1,4 +1,4 @@
-package com.anonymous.kaizoku
+package com.gitfudge.kaizoku
 
 import com.rnfs.RNFSPackage;
 import com.asterinet.react.bgactions.BackgroundActionsPackage;

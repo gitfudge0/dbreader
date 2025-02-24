@@ -1,4 +1,4 @@
-package com.anonymous.kaizoku
+package com.gitfudge.kaizoku
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

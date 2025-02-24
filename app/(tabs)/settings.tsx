@@ -64,7 +64,6 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <View style={styles.section}>
         <View style={styles.tokenContainer}>
-          {!isEditing && <Text style={styles.textLabel}>Access Token</Text>}
           <TextInput
             label="Access Token"
             value={
