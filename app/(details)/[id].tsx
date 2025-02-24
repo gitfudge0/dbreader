@@ -5,13 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  Platform,
-  PermissionsAndroid,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import BackgroundService from "react-native-background-actions";
 import RNFS from "react-native-fs";
 import {
@@ -21,28 +15,10 @@ import {
   Text,
 } from "react-native-paper";
 import Toast from "react-native-toast-message";
-
-const requestStoragePermission = async () => {
-  try {
-    if (Number(Platform.Version) >= 33) {
-      return true;
-    }
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      {
-        title: "Storage Permission",
-        message: "App needs access to storage to download files",
-        buttonNeutral: "Ask Me Later",
-        buttonNegative: "Cancel",
-        buttonPositive: "OK",
-      },
-    );
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
-  } catch (err) {
-    console.warn(err);
-    return false;
-  }
-};
+import {
+  requestNotificationPermission,
+  requestStoragePermission,
+} from "@/utils/deviceMethods";
 
 interface DownloadProgress {
   [key: string]: {
@@ -109,6 +85,7 @@ export default function TorrentDetailsScreen() {
     };
 
     loadCachedLinks();
+
     return () => {
       BackgroundService.stop();
     };
@@ -200,6 +177,20 @@ export default function TorrentDetailsScreen() {
     try {
       const filename = item.filename;
       const downloadUrl = item.download;
+      const notificationTaskName = `Download-${item.filename}`;
+
+      let downloadNotificationOptions = {
+        taskName: notificationTaskName,
+        taskTitle: `Downloading ${item.filename}`,
+        taskDesc: "Progress: 0%",
+        color: "#ff00ff",
+        progressBar: {
+          max: 100,
+          value: 0,
+          indeterminate: false,
+        },
+      };
+      await BackgroundService.updateNotification(downloadNotificationOptions);
 
       // Get the downloads directory path
       const downloadPath = RNFS.DownloadDirectoryPath + "/Kaizoku/" + filename;
@@ -212,9 +203,15 @@ export default function TorrentDetailsScreen() {
       const { promise } = RNFS.downloadFile({
         fromUrl: downloadUrl,
         toFile: downloadPath,
-        progress: (response) => {
+        progress: async (response) => {
           const progress =
             (response.bytesWritten / response.contentLength) * 100;
+
+          downloadNotificationOptions.progressBar.value = progress;
+          downloadNotificationOptions.taskDesc = `Progress: ${progress}%`;
+          await BackgroundService.updateNotification(
+            downloadNotificationOptions,
+          );
 
           // Update the downloads state
           setDownloads((prev) => ({
@@ -276,8 +273,9 @@ export default function TorrentDetailsScreen() {
 
   const handleDownload = async (item: UnrestrictModel.UnrestrictedItem) => {
     const hasStoragePermission = await requestStoragePermission();
+    const hasNotificationPermission = await requestNotificationPermission();
 
-    if (!hasStoragePermission) {
+    if (!hasStoragePermission && !hasNotificationPermission) {
       Toast.show({
         type: "error",
         text1: "Permission Required",
