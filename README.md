@@ -1,50 +1,66 @@
-# Welcome to your Expo app 👋
+# DBReader (Kaizoku)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern Real-Debrid client for managing torrents and downloads.
 
-## Get started
+## What is DBReader?
 
-1. Install dependencies
+DBReader is a mobile application built for [Real-Debrid](https://real-debrid.com), a premium file hosting service. This app allows you to:
 
-   ```bash
-   npm install
-   ```
+- Add magnet links to Real-Debrid
+- Monitor torrent downloads on Real-Debrid servers
+- Unrestrict links for direct access
+- Download the resulting files to your device
 
-2. Start the app
+## Getting Started
 
-   ```bash
-    npx expo start
-   ```
+### Setting Up Real-Debrid API Access
 
-In the output, you'll find options to open the app in a
+1. Visit https://real-debrid.com/apitoken
+2. Click "Click here to generate a client ID for open source applications"
+3. Save the generated client_id
+4. In the app's settings screen, follow the instructions to authenticate with Real-Debrid
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Features
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Torrent Management**: Add magnets, monitor progress, select files
+- **Download Management**: Download files directly to your device
+- **Progress Tracking**: Monitor download status with notifications
+- **Media Handling**: Stream content directly from Real-Debrid
 
-## Get a fresh project
+## Technology Stack
 
-When you're ready, run:
+- React Native / Expo
+- TypeScript
+- Zustand for state management
+- React Query for API data fetching
+- React Native Paper for UI components
 
-```bash
-npm run reset-project
-```
+## Contributing
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Learn more
+## Legal Disclaimer
 
-To learn more about developing your project with Expo, look at the following resources:
+**IMPORTANT**: DBReader is intended for legal use only. The application should only be used to download and manage content that you have the legal right to access.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The developer of this application:
 
-## Join the community
+- Does not host, store, or distribute any content
+- Is not responsible for how users utilize this software
+- Cannot be held liable for any laws broken by users of this application
+- Does not endorse or encourage illegal activities of any kind
 
-Join our community of developers creating universal apps.
+By using this application, you agree that you are solely responsible for complying with all applicable copyright laws and regulations in your jurisdiction.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [Real-Debrid](https://real-debrid.com) for their API
+- [Expo](https://expo.dev) for the React Native development framework
