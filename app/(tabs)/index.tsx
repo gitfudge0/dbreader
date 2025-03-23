@@ -2,47 +2,15 @@ import { FlashList } from "@shopify/flash-list";
 import { StyleSheet, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useRouter } from "expo-router";
-import Toast from "react-native-toast-message";
 import { TorrentListItem } from "@/components/TorrentItem";
-import { AddMagnetModal } from "../../components/AddMagnetModal";
 import { colors } from "../../theme/colors";
-import { api } from "@/api/methods";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect } from "react";
+import { torrentListQuery } from "@/api/queries";
 
 export default function TorrentScreen() {
-  const queryClient = useQueryClient();
   const router = useRouter();
-  const [modalVisible, setModalVisible] = useState(false);
 
-  const {
-    data: torrents,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["torrents"],
-    queryFn: () => api.getTorrents(),
-  });
-
-  const addMagnetMutation = useMutation({
-    mutationFn: (magnet: string) => api.addMagnet(magnet),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["torrents"] });
-      setModalVisible(false);
-      Toast.show({
-        type: "success",
-        text1: "Success",
-        text2: "Magnet link added successfully",
-      });
-    },
-    onError: (error) => {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message,
-      });
-    },
-  });
+  const { data: torrents, isLoading, refetch } = torrentListQuery();
 
   if (isLoading) {
     return (
@@ -77,11 +45,6 @@ export default function TorrentScreen() {
         onRefresh={refetch}
         refreshing={isLoading}
       />
-      <AddMagnetModal
-        visible={modalVisible}
-        onDismiss={() => setModalVisible(false)}
-        onSubmit={(magnet) => addMagnetMutation.mutate(magnet)}
-      />
     </View>
   );
 }
@@ -95,6 +58,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: colors.background,
   },
   list: {
     padding: 16,

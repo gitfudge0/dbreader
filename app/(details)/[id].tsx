@@ -3,9 +3,9 @@ import UnrestrictModel from "@/models/Unrestrict.model";
 import { colors } from "@/theme/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Linking, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import BackgroundService from "react-native-background-actions";
 import RNFS from "react-native-fs";
 import {
@@ -19,6 +19,7 @@ import {
   requestNotificationPermission,
   requestStoragePermission,
 } from "@/utils/deviceMethods";
+import { torrentListQuery } from "@/api/queries";
 
 interface DownloadProgress {
   [key: string]: {
@@ -49,12 +50,19 @@ export default function TorrentDetailsScreen() {
   >({});
   const [downloads, setDownloads] = useState<DownloadProgress>({});
   const [activeDownloads, setActiveDownloads] = useState<number>(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch torrent details
-  const { data: torrent, isLoading } = useQuery({
+  const { data: torrent, isLoading, refetch } = useQuery({
     queryKey: ["torrent", id],
     queryFn: () => api.getTorrentInfo(id),
   });
+  
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   // Load cached unrestricted links
   useEffect(() => {
@@ -91,6 +99,24 @@ export default function TorrentDetailsScreen() {
     };
   }, [id]);
 
+  const deleteMutation = useMutation({
+    mutationFn: () => api.deleteTorrent(id),
+    onSuccess: () => {
+      Toast.show({
+        type: "success",
+        text1: "Deleted",
+      });
+      const { refetch: torrentRefetch } = torrentListQuery();
+      torrentRefetch();
+      router.push("/(tabs)");
+    },
+    onError: () => {
+      Toast.show({
+        type: "error",
+        text1: "Error in deleting",
+      });
+    },
+  });
   const unrestrictMutation = useMutation({
     mutationFn: async (links: string[]) => {
       const results = await Promise.all(
@@ -167,6 +193,17 @@ export default function TorrentDetailsScreen() {
       type: "info",
       text1: "Opening Media",
       text2: item.filename,
+    });
+  }, []);
+  
+  const handleOpenInBrowser = useCallback((item: UnrestrictModel.UnrestrictedItem) => {
+    Linking.openURL(item.download).catch(err => {
+      console.error("Failed to open URL:", err);
+      Toast.show({
+        type: "error",
+        text1: "Failed to open URL",
+        text2: err.message,
+      });
     });
   }, []);
 
@@ -386,7 +423,17 @@ export default function TorrentDetailsScreen() {
           },
         }}
       />
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.filename}>{torrent.filename}</Text>
           <Text style={styles.details} variant="bodyMedium">
@@ -398,6 +445,13 @@ export default function TorrentDetailsScreen() {
           <Text style={styles.details} variant="bodyMedium">
             Progress: {torrent.progress}%
           </Text>
+          <Button
+            mode="contained"
+            style={styles.deleteButton}
+            onPress={() => deleteMutation.mutate()}
+          >
+            Delete torrent
+          </Button>
         </View>
 
         <View style={styles.content}>
@@ -447,6 +501,14 @@ export default function TorrentDetailsScreen() {
                     </View>
                     {unrestrictedData && (
                       <View style={styles.linkActions}>
+                        <IconButton
+                          icon="open-in-new"
+                          mode="outlined"
+                          iconColor="#fff"
+                          size={22}
+                          style={styles.iconOnlyButton}
+                          onPress={() => handleOpenInBrowser(unrestrictedData)}
+                        />
                         {unrestrictedData.streamable === 1 && (
                           <IconButton
                             icon="play"
@@ -633,5 +695,8 @@ const styles = StyleSheet.create({
   warningText: {
     color: "#fff",
     marginBottom: 8,
+  },
+  deleteButton: {
+    width: 150,
   },
 });

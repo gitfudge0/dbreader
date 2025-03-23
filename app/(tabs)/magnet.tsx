@@ -61,12 +61,6 @@ export default function MagnetScreen() {
     },
   });
 
-  useEffect(() => {
-    if (torrentInfo?.files) {
-      setSelectedFiles(new Set(torrentInfo.files.map((f) => f.id)));
-    }
-  }, [torrentInfo]);
-
   const handleSubmit = () => {
     if (!magnetLink.trim()) {
       setError("Please enter a magnet link");
@@ -105,6 +99,26 @@ export default function MagnetScreen() {
     isLoadingInfo ||
     selectFilesMutation.isPending;
 
+  useEffect(() => {
+    if (torrentInfo?.files) {
+      setSelectedFiles(new Set(torrentInfo.files.map((f) => f.id)));
+    }
+  }, [torrentInfo]);
+
+  const resetPage = () => {
+    setMagnetLink("");
+    setError("");
+    setSelectedFiles(new Set());
+    setTorrentId(null);
+    addMagnetMutation.reset();
+  };
+
+  useEffect(() => {
+    return () => {
+      resetPage();
+    };
+  }, []);
+
   return (
     <>
       <Stack.Screen
@@ -126,6 +140,15 @@ export default function MagnetScreen() {
             disabled={isLoading}
             style={styles.input}
             textColor={colors.onSurface}
+            right={
+              magnetLink ? (
+                <TextInput.Icon
+                  icon="close-circle"
+                  onPress={resetPage}
+                  forceTextInputFocus={false}
+                />
+              ) : null
+            }
             theme={{
               colors: {
                 onSurfaceVariant: colors.onSurface, // Make label more visible
